@@ -97,44 +97,47 @@ def pr_threshold_chart(thresholds, precision, recall, f2):
     
     return chart
 
-def confusion_matrix_chart(cm, labels=("No Churn", "Churn")):    
-    # Pastikan bentuk cm benar
-    cm = np.array(cm)
+def confusion_matrix_chart(cm, labels=("No Churn", "Churn")):
+    cm = np.asarray(cm).astype(int)
     if cm.shape != (2, 2):
-        return alt.Chart(pd.DataFrame({"msg": ["Invalid confusion matrix shape."]})).mark_text(
-            text="Invalid confusion matrix", fontSize=16, color="red"
-        )
+        return alt.Chart(pd.DataFrame({"msg": ["Invalid confusion matrix shape"]})).mark_text(
+            fontSize=16, color="red"
+        ).encode(text="msg:N").properties(width=300, height=300, title="Confusion Matrix")
+
+    # data frame 2x2
+    counts = [int(cm[0, 0]), int(cm[0, 1]), int(cm[1, 0]), int(cm[1, 1])]
+    vmax = max(counts)
+    domain = [0, vmax if vmax > 0 else 1]
 
     df = pd.DataFrame({
-        "Actual": [labels[0], labels[0], labels[1], labels[1]],
+        "Actual":    [labels[0], labels[0], labels[1], labels[1]],
         "Predicted": [labels[0], labels[1], labels[0], labels[1]],
-        "Count": [int(cm[0,0]), int(cm[0,1]), int(cm[1,0]), int(cm[1,1])]
+        "Count":     counts
     })
-    
+
     base = alt.Chart(df).encode(
         x=alt.X("Predicted:N", title="Predicted"),
-        y=alt.Y("Actual:N", title="Actual")
+        y=alt.Y("Actual:N",    title="Actual")
     )
 
-    heatmap = base.mark_rect().encode(
-        color=alt.Color("Count:Q", scale=alt.Scale(scheme="blues")),
-        tooltip=["Actual", "Predicted", "Count"]
+    heatmap = base.mark_rect(stroke="#FFFFFF", strokeWidth=0.5).encode(
+        color=alt.Color("Count:Q", scale=alt.Scale(domain=domain, scheme="blues")),
+        tooltip=["Actual:N", "Predicted:N", alt.Tooltip("Count:Q", format="d")]
     )
 
-    text = base.mark_text(baseline="middle", fontSize=16, fontWeight="bold").encode(
-        text="Count:Q",
+    text = base.mark_text(align="center", baseline="middle", fontSize=16, fontWeight="bold").encode(
+        text=alt.Text("Count:Q", format="d"),
         color=alt.condition(
-            alt.datum.Count > df["Count"].max() / 2,
-            alt.value("white"),
-            alt.value("black")
+            alt.datum.Count > (vmax / 2 if vmax > 0 else 0.5),
+            alt.value("white"), alt.value("black")
         )
     )
 
     return (heatmap + text).properties(
-        width=300,
-        height=300,
-        title="Confusion Matrix"
-    )
+        width=300, height=300, title="Confusion Matrix"
+    ).configure_axis(
+        labelColor="#FFFFFF", titleColor="#FFFFFF"   
+    ).configure_view(stroke=None)
 
 def shap_bar(shap_values, feature_names, top_k=12):
     """Return Altair bar chart of mean(|SHAP|) per feature."""
