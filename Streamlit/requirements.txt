@@ -1,12 +1,21 @@
+# Core Dependencies
 streamlit>=1.28.0
 pandas>=2.0.0
 numpy>=1.24.0
-scikit-learn>=1.3.0
+
+# ML Libraries - Pin exact versions for model compatibility
+scikit-learn==1.7.0
 imbalanced-learn>=0.11.0
-lightgbm>=4.0.0
 xgboost>=2.0.0
+
+# Model Explainability
 shap>=0.42.0
+
+# Visualization
 altair>=5.0.0
+matplotlib>=3.7.0
 pillow>=10.0.0
-matplotlib
 graphviz>=0.20.1
+
+# Optional: Tree-based models (if needed)
+# lightgbm>=4.0.0

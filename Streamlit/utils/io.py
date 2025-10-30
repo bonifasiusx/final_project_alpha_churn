@@ -84,6 +84,12 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
         st.stop()
 
     _ensure_pickle_compat()
+    
+    # Suppress sklearn version warnings (safe for minor version differences)
+    import warnings
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+    
     with open(path_obj, "rb") as f:
         obj = pickle.load(f)
 
