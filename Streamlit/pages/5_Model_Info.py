@@ -292,12 +292,16 @@ st.markdown("---")
 st.markdown("## ⚠️ Model Limitations & Considerations")
 
 st.markdown("""
-- **Data Drift**: Model performance may degrade if customer behavior patterns change significantly
-- **Class Imbalance**: Handled via **class-weight (scale_pos_weight)** during training; monitor drift in class ratios over time.
-- **Feature Availability**: All expected features must be present (missing features are imputed)
-- **Interpretability**: Tree-based models are more interpretable than neural networks, but still complex
-- **Temporal Validity**: Model trained on historical data; may not capture future trends
-- **Ethical Considerations**: Ensure predictions don't discriminate against protected groups
+- **Label Definition**: Churn is inferred from inactivity without a strict business rule, which can cause **label bias or misclassification** (e.g., active users misidentified as churners).
+- **Metric Choice (F₂)**: Model is optimized for **F₂-Score** (recall-heavy). If future business priorities emphasize **precision** or cost-based targeting, threshold recalibration is required.
+- **Seasonality**: The model does not account for **time-based or promotional seasonality**, so performance may vary during campaigns or holiday periods.
+- **Monetary Features**: Missing financial indicators such as **CLV, AOV, or total spend** limit the model’s ability to prioritize high-value customers in retention strategies.
+- **Data Drift**: Model performance may degrade if **customer behavior or churn patterns shift** significantly; regular monitoring and retraining are recommended.
+- **Class Imbalance**: Addressed using **class-weight (scale_pos_weight)** during training; monitor for changes in churn ratio over time.
+- **Feature Availability**: All required features must be present during inference; missing data is imputed but may affect prediction accuracy.
+- **Threshold Sensitivity**: Deployed model uses a **CV-derived threshold**; recalibration should be done periodically as business costs or data distributions evolve.
+- **Interpretability**: Tree-based models are generally interpretable but can still exhibit **non-linear and interacting effects** that are not easily observable.
+- **Ethical Considerations**: Regularly audit predictions to ensure **no bias or unfair treatment** against protected demographic groups.
 """)
 
 # Footer
