@@ -11,6 +11,7 @@ import numpy as np
 import pickle, sys, importlib
 from pathlib import Path
 from typing import Tuple, List
+import json
 
 # Column alias mapping for typos
 ALIAS_MAP = {
@@ -45,29 +46,57 @@ except Exception:
 
 def fix_xgb_base_score(xgb_model):
     """
-    Fix XGBoost base_score that might be stored as string '[5E-1]'.
-    This is a common issue when loading older XGBoost models.
+    Robust fix untuk base_score XGBoost yang tersimpan sebagai string dengan bracket,
+    mis. '[5E-1]'. Bekerja untuk XGBoost 2.x / 3.x.
     """
     try:
         if hasattr(xgb_model, "get_booster"):
             booster = xgb_model.get_booster()
-            
-            # Try to get base_score from attributes
-            base_score = booster.attributes().get("base_score", None)
-            
-            if base_score and isinstance(base_score, str):
-                # Remove brackets and convert: '[5E-1]' -> 0.5
-                base_score_clean = base_score.strip('[]').strip()
-                base_score_float = float(base_score_clean)
-                
-                # Set the corrected base_score
-                booster.set_param({"base_score": str(base_score_float)})
-                print(f"✅ Fixed XGBoost base_score: {base_score} -> {base_score_float}")
-                
+
+            raw = None
+            # 1) Coba dari attributes() lebih dulu
+            try:
+                raw = (booster.attributes() or {}).get("base_score", None)
+            except Exception:
+                raw = None
+
+            # 2) Jika tidak ada di attributes, baca dari JSON config
+            if raw is None:
+                try:
+                    cfg = json.loads(booster.save_config())
+                    raw = (
+                        cfg.get("learner", {})
+                           .get("learner_model_param", {})
+                           .get("base_score", None)
+                    )
+                except Exception:
+                    raw = None
+
+            # 3) Jika raw berupa string dengan bracket, bersihkan dan tulis ulang
+            if isinstance(raw, (bytes, bytearray)):
+                raw = raw.decode("utf-8", errors="ignore")
+
+            if isinstance(raw, str):
+                s = raw.strip()
+                if s.startswith("[") and s.endswith("]"):
+                    s = s[1:-1].strip()   # '[5E-1]' -> '5E-1'
+                try:
+                    base_score_float = float(s)  # '5E-1' -> 0.5
+                    # Tulis balik sebagai param dan attr agar konsisten
+                    booster.set_param({"base_score": str(base_score_float)})
+                    booster.set_attr(base_score=str(base_score_float))
+                    # Opsional: juga set di estimator sklearn (jaga-jaga)
+                    try:
+                        xgb_model.set_params(base_score=base_score_float)
+                    except Exception:
+                        pass
+                    print(f"✅ Fixed XGBoost base_score: {raw} -> {base_score_float}")
+                except Exception as e:
+                    print(f"⚠️ Gagal parse base_score '{raw}': {e}")
+
     except Exception as e:
-        # Silent fail - model might still work
         print(f"⚠️ Could not fix base_score (model may still work): {e}")
-    
+
     return xgb_model
 
 @st.cache_resource

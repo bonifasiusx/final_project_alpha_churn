@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.brand import inject_brand_css, brand_header
-from utils.io import load_pipeline, get_expected_cols, align_df, score, prepare_for_shap
+from utils.io import load_pipeline, get_expected_cols, align_df, score, prepare_for_shap, fix_xgb_base_score
 from utils.viz import gauge
 import matplotlib.pyplot as plt
 import shap
@@ -11,8 +11,9 @@ st.set_page_config(page_title="Single Scoring", page_icon="🧮", layout="wide")
 inject_brand_css(dark=True)
 brand_header("Single Customer Scoring")
 
-# Load pipeline
+# Load pipeline + guard
 pipeline, model_label, _ = load_pipeline()  
+pipeline.named_steps["model"] = fix_xgb_base_score(pipeline.named_steps["model"])
 threshold = st.session_state.get("threshold", 0.5)
 
 st.markdown(f"""
