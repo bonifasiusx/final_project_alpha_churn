@@ -40,19 +40,20 @@ def fix_xgb_base_score(xgb_model):
     """Fix potential string base_score in XGBoost models."""
     if hasattr(xgb_model, "get_booster"):
         booster = xgb_model.get_booster()
-        config = booster.save_config()  # Save config to check base_score
-        base_score = booster.get_params().get("base_score", None)
-
-        if isinstance(base_score, str):
-            try:
-                # Convert string base_score to float (in case it's in scientific notation like '5E-1')
-                base_score = float(base_score)
-                booster.set_params(base_score=base_score)
-            except ValueError:
-                pass  # If it fails, just keep it as it is
+        base_score = booster.attributes().get("base_score", None)
         
-        # Optionally, re-load the fixed booster configuration
-        booster.load_config(config)
+        if base_score and isinstance(base_score, str):
+            try:
+                # Remove brackets if present: '[5E-1]' -> '5E-1'
+                base_score_clean = base_score.strip('[]')
+                base_score_float = float(base_score_clean)
+                
+                # Set the corrected base_score
+                booster.set_param({"base_score": base_score_float})
+                print(f"✅ Fixed base_score: {base_score} -> {base_score_float}")
+            except (ValueError, AttributeError) as e:
+                print(f"⚠️ Could not fix base_score: {e}")
+    
     return xgb_model
 
 @st.cache_resource
@@ -61,7 +62,7 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
     Load final pipeline (XGBoost + class-weight, no resampling).
     Returns: (pipeline, model_label, path_obj)
     """
-    base_dir = Path(__file__).resolve().parent.parent  # -> .../Streamlit
+    base_dir = Path(__file__).resolve().parent.parent
     path_obj = (base_dir / path).resolve()
 
     if not path_obj.exists():
@@ -79,13 +80,21 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
         pipe = obj
         cfg  = None
 
+    # 🔧 FIX XGBoost base_score issue
+    if hasattr(pipe, "named_steps") and "model" in pipe.named_steps:
+        pipe.named_steps["model"] = fix_xgb_base_score(pipe.named_steps["model"])
+
     # label
     model_label = "XGBoost (Class-weight • Balanced)"
     st.success(f"✅ Model loaded: {model_label}")
 
-    # Set threshold if available in cfg
+    # Set threshold from cfg (override existing if cfg has it)
     if cfg and hasattr(cfg, "threshold"):
-        st.session_state.setdefault("threshold", float(cfg.threshold))  # Set threshold in session state
+        st.session_state["threshold"] = float(cfg.threshold)  # ✅ Always use cfg threshold
+        print(f"📌 Threshold set from config: {cfg.threshold}")
+    elif "threshold" not in st.session_state:
+        st.session_state["threshold"] = 0.50  # Default fallback
+        print("📌 Using default threshold: 0.50")
 
     return pipe, model_label, path_obj
 

@@ -7,6 +7,7 @@ from utils.brand import inject_brand_css, brand_header
 from utils.io import get_expected_cols
 from utils.io import load_pipeline
 from pathlib import Path
+import pickle
 
 # Page config
 st.set_page_config(
@@ -46,6 +47,22 @@ with st.sidebar:
         help="Customers with churn probability above this threshold will be classified as 'Churn'."
     )
     st.session_state.threshold = threshold
+    
+    st.markdown("---")
+    st.markdown("### 🎯 Threshold Info")
+    
+    # Check if threshold came from config
+    _, _, model_path = load_pipeline()
+    with open(model_path, "rb") as f:
+        obj = pickle.load(f)
+    cfg = obj.get("cfg", None) if isinstance(obj, dict) else None
+    
+    if cfg and hasattr(cfg, "threshold"):
+        st.info(f"📌 Model default: **{cfg.threshold:.2f}** (from training)")
+    else:
+        st.info("📌 Using app default: **0.50**")
+    
+    st.markdown(f"Current: **{st.session_state['threshold']:.2f}**")
 
     st.markdown("---")
     st.markdown("### 📊 Model Info")

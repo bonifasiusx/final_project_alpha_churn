@@ -15,6 +15,9 @@ brand_header("Single Customer Scoring")
 pipeline, model_label, _ = load_pipeline()  
 threshold = st.session_state.get("threshold", 0.5)
 
+# After loading the model and getting threshold:
+probs, preds = score(df_aligned, pipeline, threshold)
+
 st.markdown(f"""
 Enter customer information below to get an instant churn risk assessment.
 """)
