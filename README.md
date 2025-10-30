@@ -1,5 +1,3 @@
-
-
 # 🏢 Alpha Company — Customer Churn Prediction
 
 **👨‍💻 Authors:** [Alfriando C. Vean](https://github.com/alfcvean) · [Ardinata Jeremy Kingstone Tambun](https://github.com/ardinatatambun) · [Bonifasius Sinurat](https://github.com/bonifasiusx)
@@ -116,6 +114,8 @@ This project aims to **predict and prevent churn** by:
 ---
 
 ## 🚀 7. Deployment & Operations
+
+📍 [Visit Alpha Churn Predictor](https://alpha-churn-predictor.streamlit.app/)
 
 **Deployment Options:**
 
