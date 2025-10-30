@@ -84,7 +84,7 @@ if uploaded_file is not None:
             selected_threshold = st.slider(
                 "Select Threshold",
                 min_value=0.10, max_value=0.90, step=0.01,
-                value=current_threshold
+                value=st.session_state["threshold"]
             )
         with col2:
             if st.button("✅ Set as Default", use_container_width=True):
@@ -99,7 +99,7 @@ if uploaded_file is not None:
         precision_sel = precision_score(y_true, y_pred_selected, zero_division=0)
         recall_sel    = recall_score(y_true, y_pred_selected, zero_division=0)
         f2_sel        = fbeta_score(y_true, y_pred_selected, beta=2, zero_division=0)
-
+        
         st.markdown(f"### 📊 Metrics at Threshold = {selected_threshold:.2f}")
 
         col1, col2, col3 = st.columns(3)  # ← 3 kolom (tanpa F1)
@@ -159,11 +159,18 @@ if uploaded_file is not None:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            best_f2_idx = np.argmax(f2_scores)
-            best_f2_threshold = thresholds[best_f2_idx]
+            best_f2_idx = int(np.nanargmax(f2_scores))
+            best_f2_threshold = float(np.round(thresholds[best_f2_idx], 2))
+            
+            if st.session_state.get("last_uploaded_name") != uploaded_file.name:
+                st.session_state["last_uploaded_name"] = uploaded_file.name
+                st.session_state["threshold"] = best_f2_threshold
+    
             st.markdown("**Best F2 Score**")
             st.metric("Threshold", f"{best_f2_threshold:.2f}")
             st.metric("F2 Score", f"{f2_scores[best_f2_idx]:.3f}")
+            
+            st.caption(f"Applied default: Best F2 ({best_f2_threshold:.2f}) for this dataset")
         
         with col2:
             # Find threshold where precision ≈ recall (balanced)
