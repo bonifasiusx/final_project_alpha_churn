@@ -37,7 +37,7 @@ This project aims to **predict and prevent churn** by:
 | **Validation**     | 5-Fold CV (with randomized tuning) on**train-only** using **F₂-score** as primary metric; **threshold tuned via CV (train-only)**  |
 | **Final Test**     | **Single holdout evaluation once** (no peeking) after model + threshold are frozen                                                                 |
 | **Explainability** | **SHAP** (global summary, dependence, local waterfall)                                                                                             |
-| **Business Layer** | ROI simulation with**CAC–CRC** unit economics                                                                                                     |
+| **Business Layer** | ROI simulation with **CAC–CRC** unit economics                                                                                                   |
 
 ### 🧠 Pipeline Overview
 
