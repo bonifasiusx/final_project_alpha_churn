@@ -1,3 +1,10 @@
+# Shim classes for unpickling (ensure available before pickle.load)
+class ChurnXGBCWConfig:
+    pass
+
+class ChurnXGBCWPipeline:
+    pass
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -37,22 +44,29 @@ except Exception:
     pass
 
 def fix_xgb_base_score(xgb_model):
-    """Fix potential string base_score in XGBoost models."""
-    if hasattr(xgb_model, "get_booster"):
-        booster = xgb_model.get_booster()
-        base_score = booster.attributes().get("base_score", None)
-        
-        if base_score and isinstance(base_score, str):
-            try:
-                # Remove brackets if present: '[5E-1]' -> '5E-1'
-                base_score_clean = base_score.strip('[]')
+    """
+    Fix XGBoost base_score that might be stored as string '[5E-1]'.
+    This is a common issue when loading older XGBoost models.
+    """
+    try:
+        if hasattr(xgb_model, "get_booster"):
+            booster = xgb_model.get_booster()
+            
+            # Try to get base_score from attributes
+            base_score = booster.attributes().get("base_score", None)
+            
+            if base_score and isinstance(base_score, str):
+                # Remove brackets and convert: '[5E-1]' -> 0.5
+                base_score_clean = base_score.strip('[]').strip()
                 base_score_float = float(base_score_clean)
                 
                 # Set the corrected base_score
-                booster.set_param({"base_score": base_score_float})
-                print(f"✅ Fixed base_score: {base_score} -> {base_score_float}")
-            except (ValueError, AttributeError) as e:
-                print(f"⚠️ Could not fix base_score: {e}")
+                booster.set_param({"base_score": str(base_score_float)})
+                print(f"✅ Fixed XGBoost base_score: {base_score} -> {base_score_float}")
+                
+    except Exception as e:
+        # Silent fail - model might still work
+        print(f"⚠️ Could not fix base_score (model may still work): {e}")
     
     return xgb_model
 
@@ -62,7 +76,7 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
     Load final pipeline (XGBoost + class-weight, no resampling).
     Returns: (pipeline, model_label, path_obj)
     """
-    base_dir = Path(__file__).resolve().parent.parent
+    base_dir = Path(__file__).resolve().parent.parent  # -> .../Streamlit
     path_obj = (base_dir / path).resolve()
 
     if not path_obj.exists():
@@ -80,21 +94,23 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
         pipe = obj
         cfg  = None
 
-    # 🔧 FIX XGBoost base_score issue
+    # 🔧 Fix XGBoost base_score issue before any predictions
     if hasattr(pipe, "named_steps") and "model" in pipe.named_steps:
         pipe.named_steps["model"] = fix_xgb_base_score(pipe.named_steps["model"])
 
     # label
     model_label = "XGBoost (Class-weight • Balanced)"
-    st.success(f"✅ Model loaded: {model_label}")
-
-    # Set threshold from cfg (override existing if cfg has it)
+    
+    # 🎯 Set threshold from config (always override to ensure consistency)
     if cfg and hasattr(cfg, "threshold"):
-        st.session_state["threshold"] = float(cfg.threshold)  # ✅ Always use cfg threshold
-        print(f"📌 Threshold set from config: {cfg.threshold}")
-    elif "threshold" not in st.session_state:
-        st.session_state["threshold"] = 0.50  # Default fallback
-        print("📌 Using default threshold: 0.50")
+        threshold_value = float(cfg.threshold)
+        st.session_state["threshold"] = threshold_value
+        st.success(f"✅ Model loaded: {model_label} (threshold: {threshold_value:.2f})")
+    else:
+        # Fallback to default only if not already set
+        if "threshold" not in st.session_state:
+            st.session_state["threshold"] = 0.50
+        st.success(f"✅ Model loaded: {model_label}")
 
     return pipe, model_label, path_obj
 
@@ -161,6 +177,8 @@ def score(df: pd.DataFrame, pipeline, threshold: float = 0.5) -> Tuple[np.ndarra
         return probs, preds
     except Exception as e:
         st.error(f"Scoring failed: {e}")
+        import traceback
+        st.code(traceback.format_exc())
         return np.array([]), np.array([])
 
 def template_csv(pipeline, n_rows: int = 3) -> pd.DataFrame:

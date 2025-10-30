@@ -7,16 +7,13 @@ import matplotlib.pyplot as plt
 import shap
 import numpy as np
 
-st.set_page_config(page_title="Single Scoring", page_icon="🧍", layout="wide")
+st.set_page_config(page_title="Single Scoring", page_icon="🧮", layout="wide")
 inject_brand_css(dark=True)
 brand_header("Single Customer Scoring")
 
 # Load pipeline
 pipeline, model_label, _ = load_pipeline()  
 threshold = st.session_state.get("threshold", 0.5)
-
-# After loading the model and getting threshold:
-probs, preds = score(df_aligned, pipeline, threshold)
 
 st.markdown(f"""
 Enter customer information below to get an instant churn risk assessment.
@@ -149,7 +146,6 @@ if submit:
         st.markdown("---")
         st.markdown("### 🔎 Feature Importance (SHAP)")
             
-
         # siapkan data ter-transform + feature names + model
         X_proc, feature_names, model = prepare_for_shap(pipeline, df_aligned)
 
@@ -184,7 +180,7 @@ if submit:
         st.altair_chart(shap_bar(shap_values, feature_names, top_k=12), use_container_width=True)
 
         # Waterfall (local explanation for this record) 
-        st.markdown("#### 🔻 SHAP Waterfall (this customer)")
+        st.markdown("#### 📻 SHAP Waterfall (this customer)")
 
         # 🎨 Dark style patch for SHAP plot
         plt.style.use("default")

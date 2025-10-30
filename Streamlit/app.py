@@ -1,13 +1,14 @@
-# Shim classes for unpickling
-class ChurnXGBCWConfig: ...
-class ChurnXGBCWPipeline: ...
+# Shim classes for unpickling (MUST be BEFORE any imports that use pickle)
+class ChurnXGBCWConfig: 
+    pass
+
+class ChurnXGBCWPipeline: 
+    pass
 
 import streamlit as st
 from utils.brand import inject_brand_css, brand_header
-from utils.io import get_expected_cols
-from utils.io import load_pipeline
+from utils.io import get_expected_cols, load_pipeline
 from pathlib import Path
-import pickle
 
 # Page config
 st.set_page_config(
@@ -47,22 +48,6 @@ with st.sidebar:
         help="Customers with churn probability above this threshold will be classified as 'Churn'."
     )
     st.session_state.threshold = threshold
-    
-    st.markdown("---")
-    st.markdown("### 🎯 Threshold Info")
-    
-    # Check if threshold came from config
-    _, _, model_path = load_pipeline()
-    with open(model_path, "rb") as f:
-        obj = pickle.load(f)
-    cfg = obj.get("cfg", None) if isinstance(obj, dict) else None
-    
-    if cfg and hasattr(cfg, "threshold"):
-        st.info(f"📌 Model default: **{cfg.threshold:.2f}** (from training)")
-    else:
-        st.info("📌 Using app default: **0.50**")
-    
-    st.markdown(f"Current: **{st.session_state['threshold']:.2f}**")
 
     st.markdown("---")
     st.markdown("### 📊 Model Info")
@@ -95,7 +80,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown("""
     <div class="alpha-card">
-        <h3>🧍 Single Scoring</h3>
+        <h3>🧮 Single Scoring</h3>
         <p>Score individual customers with detailed risk analysis and SHAP explanations.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -135,7 +120,7 @@ col3.metric("Categorical Features", len(cat_cols))
 col4.metric("Current Threshold", f"{st.session_state.threshold:.2f}")
 
 # Info metrik
-st.info("Primary evaluation metric: **F₂-score (β=2)** — recall-weighted for churn prevention.")
+st.info("Primary evaluation metric: **F₂-score (β=2)** – recall-weighted for churn prevention.")
 
 # Info banner
 st.info("💡 **Tip:** Use the template CSV download in Batch Scoring to ensure your data matches the required schema.")
