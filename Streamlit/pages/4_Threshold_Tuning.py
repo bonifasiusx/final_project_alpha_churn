@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, fbeta_score, confusion_matrix
 from utils.brand import inject_brand_css, brand_header
-from utils.io import load_pipeline, align_df
+from utils.io import load_pipeline, align_df, persist_threshold
 from utils.viz import pr_threshold_chart, confusion_matrix_chart
 
 st.set_page_config(page_title="Threshold Tuning", page_icon="🎚️", layout="wide")
@@ -89,9 +89,10 @@ if uploaded_file is not None:
         with col2:
             if st.button("✅ Set as Default", use_container_width=True):
                 st.session_state.threshold = selected_threshold
+                persist_threshold(selected_threshold)  # simpan ke artifacts
                 st.success(f"Threshold updated to {selected_threshold:.2f}")
                 st.rerun()
-
+                
         # Show metrics for selected threshold
         y_pred_selected = (y_probs >= selected_threshold).astype(int)
 

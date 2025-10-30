@@ -13,6 +13,24 @@ from pathlib import Path
 from typing import Tuple, List
 import json
 
+THR_PATH = Path(__file__).resolve().parent.parent / "artifacts" / "best_threshold.json"
+
+def read_persisted_threshold(default=0.50):
+    try:
+        if THR_PATH.exists():
+            data = json.loads(THR_PATH.read_text())
+            return float(data.get("threshold", default))
+    except Exception:
+        pass
+    return default
+
+def persist_threshold(value: float):
+    try:
+        THR_PATH.parent.mkdir(parents=True, exist_ok=True)
+        THR_PATH.write_text(json.dumps({"threshold": float(value)}))
+    except Exception:
+        pass
+    
 # Column alias mapping for typos
 ALIAS_MAP = {
     "PreferredOrderCat": "PreferedOrderCat",
@@ -137,10 +155,10 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
         st.session_state["threshold"] = threshold_value
         st.success(f"✅ Model loaded: {model_label} (threshold: {threshold_value:.2f})")
     else:
-        # Fallback to default only if not already set
+        # Fallback: pakai persisted threshold kalau ada; kalau tidak, 0.50
         if "threshold" not in st.session_state:
-            st.session_state["threshold"] = 0.50
-        st.success(f"✅ Model loaded: {model_label}")
+            st.session_state["threshold"] = read_persisted_threshold(default=0.50)
+        st.success(f"✅ Model loaded: {model_label} (threshold: {st.session_state['threshold']:.2f})")
 
     return pipe, model_label, path_obj
 
