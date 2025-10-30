@@ -46,57 +46,52 @@ except Exception:
 
 def fix_xgb_base_score(xgb_model):
     """
-    Robust fix untuk base_score XGBoost yang tersimpan sebagai string dengan bracket,
-    mis. '[5E-1]'. Bekerja untuk XGBoost 2.x / 3.x.
+    Robust fix untuk base_score XGBoost yang tersimpan sebagai string dengan bracket ('[5E-1]').
+    Bekerja untuk XGBoost 2.x/3.x dan aman dipanggil berulang (idempotent).
     """
     try:
         if hasattr(xgb_model, "get_booster"):
-            booster = xgb_model.get_booster()
+            booster = xgboost_model = xgb_model.get_booster()
 
             raw = None
-            # 1) Coba dari attributes() lebih dulu
+            # 1) coba dari attributes()
             try:
-                raw = (booster.attributes() or {}).get("base_score", None)
+                raw = (booster.attributes() or {}).get("base_score")
             except Exception:
                 raw = None
 
-            # 2) Jika tidak ada di attributes, baca dari JSON config
+            # 2) kalau kosong, baca dari JSON config
             if raw is None:
                 try:
                     cfg = json.loads(booster.save_config())
                     raw = (
                         cfg.get("learner", {})
                            .get("learner_model_param", {})
-                           .get("base_score", None)
+                           .get("base_score")
                     )
                 except Exception:
                     raw = None
 
-            # 3) Jika raw berupa string dengan bracket, bersihkan dan tulis ulang
+            # 3) bersihkan bracket & set balik
             if isinstance(raw, (bytes, bytearray)):
                 raw = raw.decode("utf-8", errors="ignore")
-
             if isinstance(raw, str):
                 s = raw.strip()
                 if s.startswith("[") and s.endswith("]"):
-                    s = s[1:-1].strip()   # '[5E-1]' -> '5E-1'
+                    s = s[1:-1].strip()     # "[5E-1]" -> "5E-1"
                 try:
-                    base_score_float = float(s)  # '5E-1' -> 0.5
-                    # Tulis balik sebagai param dan attr agar konsisten
-                    booster.set_param({"base_score": str(base_score_float)})
-                    booster.set_attr(base_score=str(base_score_float))
-                    # Opsional: juga set di estimator sklearn (jaga-jaga)
+                    v = float(s)            # "5E-1" -> 0.5
+                    booster.set_param({"base_score": str(v)})
+                    booster.set_attr(base_score=str(v))
                     try:
-                        xgb_model.set_params(base_score=base_score_float)
+                        xgb_model.set_params(base_score=v)
                     except Exception:
                         pass
-                    print(f"✅ Fixed XGBoost base_score: {raw} -> {base_score_float}")
+                    print(f"✅ Fixed XGBoost base_score: {raw} -> {v}")
                 except Exception as e:
                     print(f"⚠️ Gagal parse base_score '{raw}': {e}")
-
     except Exception as e:
-        print(f"⚠️ Could not fix base_score (model may still work): {e}")
-
+        print(f"⚠️ Could not fix base_score: {e}")
     return xgb_model
 
 @st.cache_resource

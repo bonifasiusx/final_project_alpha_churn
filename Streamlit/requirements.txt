@@ -1,15 +1,15 @@
 # Core Dependencies
-streamlit>=1.28.0
-pandas>=2.0.0
-numpy>=1.24.0
+streamlit==1.48.0
+pandas==2.3.0
+numpy==2.2.0
 
 # ML Libraries - Pin exact versions for model compatibility
 scikit-learn==1.7.0
 imbalanced-learn>=0.11.0
-xgboost==3.1.1
+xgboost==3.0.2
 
 # Model Explainability
-shap==0.49.1
+shap==0.48.0
 
 # Visualization
 altair>=5.0.0

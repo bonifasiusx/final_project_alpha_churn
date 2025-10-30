@@ -12,7 +12,7 @@ inject_brand_css(dark=True)
 brand_header("Single Customer Scoring")
 
 # Load pipeline + guard
-pipeline, model_label, _ = load_pipeline()  
+pipeline, model_label, _ = load_pipeline()
 pipeline.named_steps["model"] = fix_xgb_base_score(pipeline.named_steps["model"])
 threshold = st.session_state.get("threshold", 0.5)
 
