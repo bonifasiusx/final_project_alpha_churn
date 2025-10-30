@@ -33,7 +33,7 @@ This project aims to **predict and prevent churn** by:
 | Step                     | Description                                                                                                                                               |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Preprocessing**  | Missing-value imputation (**IterativeImputer** ), scaling ( **RobustScaler** ), **One-Hot Encoding** with `handle_unknown="ignore"` |
-| **Modeling**       | **XGBoost (class-weight balanced)** ; no resampling;`scale_pos_weight`computed from train                                                         |
+| **Modeling**       | **XGBoost (class-weight balanced)** ; no resampling;` scale_pos_weight` computed from train                                                       |
 | **Validation**     | 5-Fold CV (with randomized tuning) on**train-only** using **F₂-score** as primary metric; **threshold tuned via CV (train-only)**  |
 | **Final Test**     | **Single holdout evaluation once** (no peeking) after model + threshold are frozen                                                                 |
 | **Explainability** | **SHAP** (global summary, dependence, local waterfall)                                                                                             |
