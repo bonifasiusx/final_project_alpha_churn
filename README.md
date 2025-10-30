@@ -2,7 +2,7 @@
 
 **👨‍💻 Authors:** [Alfriando C. Vean](https://github.com/alfcvean) · [Ardinata Jeremy Kingstone Tambun](https://github.com/ardinatatambun) · [Bonifasius Sinurat](https://github.com/bonifasiusx)
 
-📅 *Purwadhika Final Project — JCDS-3004 Cohort*
+📅 *Purwadhika Final Project — JCDS-3004*
 
 ---
 
