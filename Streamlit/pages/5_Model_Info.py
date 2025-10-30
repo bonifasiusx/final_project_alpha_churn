@@ -212,7 +212,6 @@ with col1:
         st.markdown(f"**Path:** `{model_path}`")
         size_mb = model_path.stat().st_size / (1024 * 1024)
         st.markdown(f"**Size:** {size_mb:.2f} MB")
-        st.markdown(f"**Modified:** {pd.Timestamp.fromtimestamp(model_path.stat().st_mtime).strftime('%Y-%m-%d %H:%M')}")
 
 with col2:
     st.markdown("### 🐍 Python Environment")
