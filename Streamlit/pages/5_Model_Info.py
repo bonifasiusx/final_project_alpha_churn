@@ -91,6 +91,16 @@ with col2:
 st.markdown("---")
 st.markdown("## ⚙️ Model Hyperparameters")
 
+# Best XGBoost hyperparameters
+best_params_xgb = {
+    'model__subsample': 0.9,
+    'model__n_estimators': 150,
+    'model__min_child_weight': 3,
+    'model__max_depth': 9,
+    'model__learning_rate': 0.2,
+    'model__colsample_bytree': 0.8
+}
+
 try:
     model = pipeline.named_steps.get("model", None)
     if model is not None:
@@ -106,13 +116,15 @@ try:
             "reg_lambda":         "L2 regularization",
             "scale_pos_weight":   "Class-weight ratio (neg/pos)",
         }
-        
+
         param_data = []
         for param, description in important_params.items():
             if param in params:
+                # Check if we have the best value from the XGBoost model
+                param_value = best_params_xgb.get(f"model__{param}", str(params[param]))
                 param_data.append({
                     "Parameter": param,
-                    "Value": str(params[param]),
+                    "Value": param_value,
                     "Description": description
                 })
         
