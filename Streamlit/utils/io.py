@@ -36,6 +36,25 @@ try:
 except Exception:
     pass
 
+def fix_xgb_base_score(xgb_model):
+    """Fix potential string base_score in XGBoost models."""
+    if hasattr(xgb_model, "get_booster"):
+        booster = xgb_model.get_booster()
+        config = booster.save_config()  # Save config to check base_score
+        base_score = booster.get_params().get("base_score", None)
+
+        if isinstance(base_score, str):
+            try:
+                # Convert string base_score to float (in case it's in scientific notation like '5E-1')
+                base_score = float(base_score)
+                booster.set_params(base_score=base_score)
+            except ValueError:
+                pass  # If it fails, just keep it as it is
+        
+        # Optionally, re-load the fixed booster configuration
+        booster.load_config(config)
+    return xgb_model
+
 @st.cache_resource
 def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
     """
@@ -64,11 +83,9 @@ def load_pipeline(path: str = "artifacts/churn_xgb_cw.sav"):
     model_label = "XGBoost (Class-weight • Balanced)"
     st.success(f"✅ Model loaded: {model_label}")
 
-    try:
-        if cfg and hasattr(cfg, "threshold"):
-            st.session_state.setdefault("threshold", float(cfg.threshold))
-    except Exception:
-        pass
+    # Set threshold if available in cfg
+    if cfg and hasattr(cfg, "threshold"):
+        st.session_state.setdefault("threshold", float(cfg.threshold))  # Set threshold in session state
 
     return pipe, model_label, path_obj
 
@@ -141,30 +158,30 @@ def template_csv(pipeline, n_rows: int = 3) -> pd.DataFrame:
     """Generate template CSV with realistic dummy rows."""
     expected, num_cols, cat_cols = get_expected_cols(pipeline)
     templates = [
-        # JELAS CHURN 
+        # JELAS CHURN
         {
             "CustomerID": 999101,
             "Tenure": 0,
-            "Complain": 1,                 
-            "OrderCount": 5,              
-            "DaySinceLastOrder": 18,       
-            "CashbackAmount": 230.0,       
-            "HourSpendOnApp": 4.7,         
+            "Complain": 1,
+            "OrderCount": 5,
+            "DaySinceLastOrder": 18,
+            "CashbackAmount": 230.0,
+            "HourSpendOnApp": 4.7,
             "PreferredLoginDevice": "Computer",
             "PreferredPaymentMode": "UPI",
             "PreferedOrderCat": "Mobile Phone",
             "MaritalStatus": "Single",
             "CityTier": 3,
-            "WarehouseToHome": 50,         
-            "CouponUsed": 4,               
-            "SatisfactionScore": 4,        
+            "WarehouseToHome": 50,
+            "CouponUsed": 4,
+            "SatisfactionScore": 4,
             "NumberOfDeviceRegistered": 2,
             "NumberOfAddress": 2,
             "Gender": "Male",
             "OrderAmountHikeFromlastYear": 0.30
         },
 
-        # JELAS LOYAL 
+        # JELAS LOYAL
         {
             "CustomerID": 999102,
             "Tenure": 36,
@@ -190,10 +207,10 @@ def template_csv(pipeline, n_rows: int = 3) -> pd.DataFrame:
         # 50 : 50 (borderline)
         {
             "CustomerID": 999103,
-            "Tenure": 1,
+            "Tenure": 3,
             "Complain": 1,
             "OrderCount": 4,
-            "DaySinceLastOrder": 180,
+            "DaySinceLastOrder": 150,
             "CashbackAmount": 50.0,
             "HourSpendOnApp": 1.5,
             "PreferredLoginDevice": "Mobile Phone",
