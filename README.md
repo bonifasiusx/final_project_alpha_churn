@@ -30,14 +30,14 @@ This project aims to **predict and prevent churn** by:
 
 ## ⚙️ 3. Methodology
 
-| Step                     | Description                                                                                                                                           |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Preprocessing**  | Missing-value imputation (**IterativeImputer** ), scaling ( **RobustScaler** ),**One-Hot Encoding**with `handle_unknown="ignore"` |
-| **Modeling**       | **XGBoost (class-weight balanced)** ; no resampling;`scale_pos_weight`computed from train                                                     |
-| **Validation**     | 5-Fold CV (with randomized tuning) on**train-only**using**F₂-score**as primary metric;**threshold tuned via CV (train-only)**      |
-| **Final Test**     | **Single holdout evaluation once**(no peeking) after model + threshold are frozen                                                               |
-| **Explainability** | **SHAP**(global summary, dependence, local waterfall)                                                                                           |
-| **Business Layer** | ROI simulation with**CAC–CRC**unit economics                                                                                                   |
+| Step                     | Description                                                                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Preprocessing**  | Missing-value imputation (**IterativeImputer** ), scaling ( **RobustScaler** ), **One-Hot Encoding** with `handle_unknown="ignore"` |
+| **Modeling**       | **XGBoost (class-weight balanced)** ; no resampling;`scale_pos_weight`computed from train                                                         |
+| **Validation**     | 5-Fold CV (with randomized tuning) on**train-only** using **F₂-score** as primary metric; **threshold tuned via CV (train-only)**  |
+| **Final Test**     | **Single holdout evaluation once** (no peeking) after model + threshold are frozen                                                                 |
+| **Explainability** | **SHAP** (global summary, dependence, local waterfall)                                                                                             |
+| **Business Layer** | ROI simulation with**CAC–CRC** unit economics                                                                                                     |
 
 ### 🧠 Pipeline Overview
 
@@ -76,7 +76,7 @@ This project aims to **predict and prevent churn** by:
 4. **CashbackAmount** — lower cashback is associated with higher churn risk
 5. **WarehouseToHome** & **DaySinceLastOrder** — distance & recency amplify risk
 
-   *(Categorical signals like  **PreferredOrderCat (Mobile Phone)** ,  **Payment Mode (COD/E-Wallet)** ,  **Device** , **MaritalStatus** also contribute meaningfully.)*
+   *(Categorical signals like **PreferredOrderCat (Mobile Phone)**, **Payment Mode (COD/E-Wallet)**, **Device**, **MaritalStatus** also contribute meaningfully.)*
 
 ### 🔍 SHAP Global Summary
 
@@ -104,14 +104,14 @@ This project aims to **predict and prevent churn** by:
 
 **Impact (Holdout Test — using the final confusion matrix)**
 
-| Component                  |        Value ($) | Notes                                                                                                                                                |
-| -------------------------- | ---------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Savings (TP)**     | **11,160** | 186 × (80 − 20)                                                                                                                                    |
-| **Cost (FP)**        |    **300** | 15 × 20                                                                                                                                             |
-| **Loss (FN)**        |    **320** | 4 × 80                                                                                                                                              |
-| **Net Impact**       | **10,540** | 11,160 − (300 + 320)                                                                                                                                |
-| **ROI (def.)**       | **36.2×** | ($(\text{Savings} - \text{Cost})/\text{Cost}$) where Cost = FP×CRC                                                                                |
-| **ROI_total (alt.)** | **1.78×** | Using full retention budget as denominator: ($(\text{Savings} - (\text{TP}+\text{FP})\times\text{CRC}) / ((\text{TP}+\text{FP})\times\text{CRC})$) |
+| Component                  |        Value ($) | Notes                                                                                  |
+| -------------------------- | ---------------: | -------------------------------------------------------------------------------------- |
+| **Savings (TP)**     | **11,160** | `186 × (80 − 20)`                                                                  |
+| **Cost (FP)**        |    **300** | `15 × 20`                                                                           |
+| **Loss (FN)**        |    **320** | `4 × 80`                                                                            |
+| **Net Impact**       | **10,540** | `11,160 − (300 + 320)`                                                              |
+| **ROI (def.)**       | **36.2×** | `ROI = (Savings − Cost) / Cost` with `Cost = FP × CRC`                           |
+| **ROI_total (alt.)** | **1.78×** | Using full retention budget: `ROI_total = (Savings − (TP+FP)*CRC) / ((TP+FP)*CRC)` |
 
 **Churn ↓ 5pp Scenario (17% → 12%)** — keep recall & FPR unchanged, same population (1,126):
 
